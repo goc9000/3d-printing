@@ -55,6 +55,7 @@ $fs = FULL_QUALITY ? 0.2 : 2;
 use <../lib/dcm_math.scad>;
 use <../lib/dcm_utils.scad>;
 use <../lib/dcm_shapes.scad>;
+use <../lib/reuleaux.scad>;
 include <coin_defs.scad>;
 include <sheet_defs.scad>;
 
@@ -97,8 +98,14 @@ std_sheet_size = [
     max(max([for (s=SHEETS) ideal_sheet_size(s)[1]]), COMPAT_SHEET_SIZE[1])
 ];
 
-module coin_hole_profile(diameter) {
-    circle(d=diameter);
+module coin_hole_profile(shape, diameter) {
+    if (shape == "circle") {
+        circle(d=diameter);
+    } else if (shape == "reuleaux7") {
+        reuleaux_polygon(n=7, w=diameter);
+    } else {
+        echo("Unsupported shape:", shape);
+    }
 }
 
 module coin_hole(coin, depth) {
@@ -108,23 +115,25 @@ module coin_hole(coin, depth) {
     tc = CH;
     bc = max(0, min(CH, depth - d - T));
     
+    shape = len(coin) < 3 ? "circle" : coin[2];
+    
     // Main hole
     translate([0, 0, depth/2 - d])
         linear_extrude(height=d+GM, center=false)
-            coin_hole_profile(diam);
+            coin_hole_profile(shape, diam);
 
     // Main hole chamfer
     translate([0, 0, depth/2 - tc])
         linear_extrude(
             height=tc+GM, center=false, scale=(diam+2*tc+2*GM)/diam
         )
-            coin_hole_profile(diam);
+            coin_hole_profile(shape, diam);
     
     // Finger hole
     fh_diam = diam-2*SW;
     translate([0, 0, -depth/2 - GM])
         linear_extrude(height=t+2*GM, center=false)
-            coin_hole_profile(fh_diam);
+            coin_hole_profile(shape, fh_diam);
     
     // Finger hole chamfer
     translate([0, 0, -depth/2 + bc])
@@ -132,7 +141,7 @@ module coin_hole(coin, depth) {
         linear_extrude(
             height=bc+GM, center=false, scale=(fh_diam+2*bc+2*GM)/fh_diam
         )
-            coin_hole_profile(fh_diam);
+            coin_hole_profile(shape, fh_diam);
 }
 
 module corner_hole(depth) {

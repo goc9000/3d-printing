@@ -1,4 +1,4 @@
-/* Coin data. An entry is (diameter, thickness) */
+/* Coin data. An entry is (diameter, thickness, shape(optional)) */
 
 EUR1 = [ 16.25, 1.67 ];
 EUR2 = [ 18.75, 1.67 ];
@@ -13,8 +13,8 @@ GBP1 = [20.3, 1.65];
 GBP2 = [25.9, 2.03];
 GBP5 = [18, 1.89];
 GBP10 = [24.5, 2.05];
-GBP20 = [21.4, 1.7];
-GBP50 = [27.3, 1.78];
+GBP20 = [21.4, 1.7, "reuleaux7"];
+GBP50 = [27.3, 1.78, "reuleaux7"];
 GBP100 = [22.5, 3.15];
 
 CHF10 = [19.15, 1.45];
