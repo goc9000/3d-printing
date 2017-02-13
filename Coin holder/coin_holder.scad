@@ -39,6 +39,11 @@ GM = 1; // "Glue margin". Adjancent components will be embedded by this
         // amount so that there are no artefacts at the interface. It is
         // also used when cutting holes near the boundary of an object.
 
+/* Enter non-zero dimensions here if you already have a printed holder and
+   wish to ensure that any modifications to coin sizes, etc. still produce
+   sheets of a compatible size. */
+COMPAT_SHEET_SIZE = [0, 0];
+
 FULL_QUALITY = false; // Whether to render in full quality (slow)
 
 PART = "SPLAYED"; // Which component to render (TOP, BASE, 0-9)
@@ -88,8 +93,8 @@ function ideal_sheet_depth(sheet) =
     D + T + max([for (c=coins_in_sheet(sheet)) c[1]]);
 
 std_sheet_size = [
-    max([for (s=SHEETS) ideal_sheet_size(s)[0]]),
-    max([for (s=SHEETS) ideal_sheet_size(s)[1]])
+    max(max([for (s=SHEETS) ideal_sheet_size(s)[0]]), COMPAT_SHEET_SIZE[0]),
+    max(max([for (s=SHEETS) ideal_sheet_size(s)[1]]), COMPAT_SHEET_SIZE[1])
 ];
 
 module coin_hole(coin, depth) {
@@ -288,25 +293,39 @@ module top() {
         pylon_cross();
 }
 
+module do_render() {
+    if (PART == "SPLAYED") {
+        translate([-160, 90, 0]) sheet(SHEETS[0]);
+        translate([-160, 0, 0]) sheet(SHEETS[1]);
+        translate([-160, -90, 0]) sheet(SHEETS[2]);
+        translate([-160, -180, 0]) base();
+        translate([0, 90, 0]) sheet(SHEETS[3]);
+        translate([0, 0, 0]) sheet(SHEETS[4]);
+        translate([0, -90, 0]) sheet(SHEETS[5]);
+        translate([0, -180, 0]) sheet(SHEETS[6]);
+        translate([160, 90, 0]) sheet(SHEETS[7]);
+        translate([160, 0, 0]) sheet(SHEETS[8]);
+        translate([160, -90, 0]) sheet(SHEETS[9]);
+        translate([160, -180, 0]) top();
+    } else if (PART == "BASE") {
+        base();
+    } else if (PART == "TOP") {
+        top();
+    } else {
+        translate([0, 0, ideal_sheet_depth(SHEETS[PART]/2)])
+            sheet(SHEETS[PART]);
+    }
+}
 
-if (PART == "SPLAYED") {
-    translate([-160, 90, 0]) sheet(SHEETS[0]);
-    translate([-160, 0, 0]) sheet(SHEETS[1]);
-    translate([-160, -90, 0]) sheet(SHEETS[2]);
-    translate([-160, -180, 0]) base();
-    translate([0, 90, 0]) sheet(SHEETS[3]);
-    translate([0, 0, 0]) sheet(SHEETS[4]);
-    translate([0, -90, 0]) sheet(SHEETS[5]);
-    translate([0, -180, 0]) sheet(SHEETS[6]);
-    translate([160, 90, 0]) sheet(SHEETS[7]);
-    translate([160, 0, 0]) sheet(SHEETS[8]);
-    translate([160, -90, 0]) sheet(SHEETS[9]);
-    translate([160, -180, 0]) top();
-} else if (PART == "BASE") {
-    base();
-} else if (PART == "TOP") {
-    top();
+if (
+    (COMPAT_SHEET_SIZE != [0,0]) && (
+        (std_sheet_size[0] > COMPAT_SHEET_SIZE[0]) ||
+        (std_sheet_size[1] > COMPAT_SHEET_SIZE[1])
+    )
+) {
+    echo("ERROR: sheet size exceeds compatibility sheet dimensions");
+    echo("Sheet size:", std_sheet_size);
+    echo("Compat size:", COMPAT_SHEET_SIZE);
 } else {
-    translate([0, 0, ideal_sheet_depth(SHEETS[PART]/2)])
-        sheet(SHEETS[PART]);
+    do_render();
 }
