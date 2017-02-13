@@ -97,25 +97,42 @@ std_sheet_size = [
     max(max([for (s=SHEETS) ideal_sheet_size(s)[1]]), COMPAT_SHEET_SIZE[1])
 ];
 
+module coin_hole_profile(diameter) {
+    circle(d=diameter);
+}
+
 module coin_hole(coin, depth) {
-    r = (coin[0] / 2) + HT;
+    diam = coin[0] + 2*HT;
     d = D + coin[1];
+    t = depth - d;
     tc = CH;
     bc = max(0, min(CH, depth - d - T));
     
-    rotate_extrude()
-        polygon([
-            [0, depth/2 + GM],
-            [r + tc, depth/2 + GM],
-            [r + tc, depth/2],
-            [r, depth/2 - tc],
-            [r, depth/2 - d],
-            [r - SW, depth/2 - d],
-            [r - SW, -depth/2 + bc],
-            [r - SW + bc, -depth/2],
-            [r - SW + bc, -depth/2 - GM],
-            [0, -depth/2 - GM],
-        ]);
+    // Main hole
+    translate([0, 0, depth/2 - d])
+        linear_extrude(height=d+GM, center=false)
+            coin_hole_profile(diam);
+
+    // Main hole chamfer
+    translate([0, 0, depth/2 - tc])
+        linear_extrude(
+            height=tc+GM, center=false, scale=(diam+2*tc+2*GM)/diam
+        )
+            coin_hole_profile(diam);
+    
+    // Finger hole
+    fh_diam = diam-2*SW;
+    translate([0, 0, -depth/2 - GM])
+        linear_extrude(height=t+2*GM, center=false)
+            coin_hole_profile(fh_diam);
+    
+    // Finger hole chamfer
+    translate([0, 0, -depth/2 + bc])
+        rotate([0,180,0])
+        linear_extrude(
+            height=bc+GM, center=false, scale=(fh_diam+2*bc+2*GM)/fh_diam
+        )
+            coin_hole_profile(fh_diam);
 }
 
 module corner_hole(depth) {
